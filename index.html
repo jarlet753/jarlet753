@@ -13,16 +13,38 @@
       background-repeat: no-repeat;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       font-family: Arial, sans-serif;
       color: white;
-      font-size: 3em;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.6);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
-  Website von jarlet753
+  <h1>Website von jarlet753</h1>
+  <button class="btn">Klick mich</button>
 </body>
 </html>
