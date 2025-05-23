@@ -22,7 +22,7 @@
       justify-content: center;
       align-items: center;
       color: white;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
     }
 
     h1 {
@@ -46,7 +46,7 @@
       transform: scale(1.05);
     }
 
-    /* Hamburger Menü-Icon */
+    /* Hamburger-Menü Icon */
     .menu-toggle {
       position: absolute;
       top: 20px;
@@ -65,14 +65,14 @@
       transition: 0.4s;
     }
 
-    /* Menü */
+    /* Menü selbst */
     .menu {
       position: absolute;
       top: 0;
       right: -250px;
       width: 250px;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: rgba(0, 0, 0, 0.85);
       padding: 60px 20px;
       box-sizing: border-box;
       display: flex;
@@ -88,32 +88,42 @@
       font-size: 1.5em;
     }
 
+    .menu a:hover {
+      text-decoration: underline;
+    }
+
     .menu.show {
       right: 0;
     }
   </style>
 </head>
 <body>
+
+  <!-- Hamburger-Menü Icon -->
   <div class="menu-toggle" onclick="toggleMenu()">
     <div></div>
     <div></div>
     <div></div>
   </div>
 
+  <!-- Menü -->
   <div class="menu" id="menu">
-    <a href="#">Start</a>
-    <a href="https://discord.com" target="_blank">Discord</a>
-    <a href="https://github.com" target="_blank">GitHub</a>
-    <a href="#">Development</a>
+    <a href="index.html">Start</a>
+    <a href="discord.html">Discord</a>
+    <a href="github.html">GitHub</a>
+    <a href="development.html">Development</a>
   </div>
 
+  <!-- Hauptinhalt -->
   <h1>Website von jarlet753</h1>
   <button class="btn">Klick mich</button>
 
+  <!-- JavaScript für Menü -->
   <script>
     function toggleMenu() {
       document.getElementById("menu").classList.toggle("show");
     }
   </script>
+
 </body>
 </html>
