@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vier Gewinnt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #222;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      margin: 0;
+      height: 100vh;
+      padding: 10px;
+    }
+
+    h1 {
+      margin-bottom: 15px;
+    }
+
+    #board {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(7, 60px);
+      grid-template-rows: repeat(6, 60px);
+      gap: 5px;
+      background: #0055aa;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #004488;
+      user-select: none;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #1a1a1a;
+      border-radius: 50%;
+      box-shadow: inset 0 0 5px #000;
+      position: relative;
+    }
+
+    .disc {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      transform: translateY(-70px);
+      animation-fill-mode: forwards;
+    }
+
+    .red {
+      background: radial-gradient(circle at 30% 30%, #ff4444, #aa0000);
+      box-shadow: 0 0 8px #ff5555;
+    }
+
+    .yellow {
+      background: radial-gradient(circle at 30% 30%, #ffff66, #aaaa00);
+      box-shadow: 0 0 8px #ffff88;
+    }
+
+    /* Animation für fallende Scheibe */
+    @keyframes fallDown {
+      0% {
+        transform: translateY(-100px);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .falling {
+      animation-name: fallDown;
+      animation-duration: 0.4s;
+      animation-timing-function: ease-in;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 1.2em;
+      min-height: 1.5em;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      background: white;
+      color: black;
+      user-select: none;
+    }
+
+    button:hover {
+      background: #ddd;
+    }
+
+    /* Cursor pointer on columns */
+    #board:hover {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Vier Gewinnt</h1>
+  <div id="board"></div>
+  <div id="message"></div>
+  <button onclick="resetGame()">Neustarten</button>
+
+  <script>
+    const ROWS = 6;
+    const COLS = 7;
+    const boardEl = document.getElementById("board");
+    const messageEl = document.getElementById("message");
+
+    // board[row][col] = "" | "R" | "Y"
+    let board = [];
+    let currentPlayer = "R"; // Rot (du)
+    let gameOver = false;
+
+    // Initialize board 2D array and render empty cells
+    function initBoard() {
+      board = [];
+      boardEl.innerHTML = "";
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          board[r][c] = "";
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          // Set data attributes to identify cells
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    // Find lowest empty row in column
+    function findEmptyRow(col) {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (board[r][col] === "") return r;
+      }
+      return -1;
+    }
+
+    // Place disc for current player with animation
+    function placeDisc(col, player) {
+      if (gameOver) return false;
+      const row = findEmptyRow(col);
+      if (row === -1) return false;
+
+      board[row][col] = player;
+      animateDiscDrop(row, col, player);
+      return true;
+    }
+
+    // Animate the disc falling down
+    function animateDiscDrop(row, col, player) {
+      const disc = document.createElement("div");
+      disc.classList.add("disc");
+      disc.classList.add(player === "R" ? "red" : "yellow");
+      disc.style.gridColumnStart = col + 1;
+      disc.style.gridRowStart = 1; // Start top row
+      boardEl.appendChild(disc);
+
+      // Calculate distance to fall in pixels (row * (cell size + gap))
+      const fallDistance = row * 65; // 60px cell + 5px gap
+
+      disc.style.transform = `translateY(${-fallDistance - 70}px)`; // Start above top
+      disc.classList.add("falling");
+
+      // Animate falling with JS to get smooth movement
+      disc.animate(
+        [
+          { transform: `translateY(${-fallDistance - 70}px)`, opacity: 0.8 },
+          { transform: `translateY(0)`, opacity: 1 }
+        ],
+        {
+          duration: 400,
+          easing: "ease-in"
+        }
+      ).onfinish = () => {
+        disc.style.gridRowStart = row + 1;
+        disc.style.transform = "";
+        disc.classList.remove("falling");
+        updateBoardUI();
+        if (checkWin(row, col, player)) {
+          gameOver = true;
+          messageEl.textContent = (player === "R" ? "Du hast gewonnen!" : "Der Bot hat gewonnen!");
+        } else if (isDraw()) {
+          gameOver = true;
+          messageEl.textContent = "Unentschieden!";
+        } else {
+          if (player === "R") {
+            currentPlayer = "Y";
+            setTimeout(botTurn, 600);
+          } else {
+            currentPlayer = "R";
+          }
+        }
+      };
+    }
+
+    // Update static board UI after animation
+    function updateBoardUI() {
+      // Remove old static discs
+      document.querySelectorAll(".cell .disc-static").forEach(el => el.remove());
+
+      // Add discs to cells (static, no animation)
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (board[r][c] !== "") {
+            const cell = [...boardEl.children].find(
+              el => +el.dataset.row === r && +el.dataset.col === c
+            );
+            if (cell && !cell.querySelector(".disc-static")) {
+              const discStatic = document.createElement("div");
+              discStatic.classList.add("disc", "disc-static");
+              discStatic.classList.add(board[r][c] === "R" ? "red" : "yellow");
+              discStatic.style.position = "absolute";
+              discStatic.style.top = "0";
+              discStatic.style.left = "0";
+              discStatic.style.width = "60px";
+              discStatic.style.height = "60px";
+              discStatic.style.borderRadius = "50%";
+              discStatic.style.pointerEvents = "none";
+              cell.style.position = "relative";
+              cell.appendChild(discStatic);
+            }
+          }
+        }
+      }
+    }
+
+    // Check if last move caused a win (4 in a row)
+    function checkWin(row, col, player) {
+      return (
+        countDirection(row, col, player, 1, 0) + countDirection(row, col, player, -1, 0) > 2 ||
+        countDirection(row, col, player, 0, 1) + countDirection(row, col, player, 0, -1) > 2 ||
+        countDirection(row, col, player, 1, 1) + countDirection(row, col, player, -1, -1) > 2 ||
+        countDirection(row, col, player, 1, -1) + countDirection(row, col, player, -1, 1) > 2
+      );
+    }
+
+    // Count discs in one direction
+    function countDirection(row, col, player, deltaR, deltaC) {
+      let r = row + deltaR;
+      let c = col + deltaC;
+      let count = 0;
+      while (
+        r >= 0 &&
+        r < ROWS &&
+        c >= 0 &&
+        c < COLS &&
+        board[r][c] === player
+      ) {
+        count++;
+        r += deltaR;
+        c += deltaC;
+      }
+      return count;
+    }
+
+    // Check for draw
+    function isDraw() {
+      return board[0].every(cell => cell !== "");
+    }
+
+    // Bot tries to win or block player, else random move
+    function botTurn() {
+      if (gameOver) return;
+      // Try to win
+      let move = findBestMove("Y");
+      // Block player if no win
+      if (move === null) move = findBestMove("R");
+      // Random if none
+      if (move === null) move = getRandomMove();
+
+      if (move !== null) {
+        placeDisc(move, "Y");
+      }
+    }
+
+    // Find move to win or block player
+    function findBestMove(player) {
+      for (let c = 0; c < COLS; c++) {
+        let r = findEmptyRow(c);
+        if (r === -1) continue;
+
+        // Temporarily place disc
+        board[r][c] = player;
+        if (checkWin(r, c, player)) {
+          board[r][c] = "";
+          return c;
+        }
+        board[r][c] = "";
+      }
+      return null;
+    }
+
+    // Get random valid column
+    function getRandomMove() {
+      let validCols = [];
+      for (let c = 0; c < COLS; c++) {
+        if (findEmptyRow(c) !== -1) validCols.push(c);
+      }
+      if (validCols.length === 0) return null;
+      return validCols[Math.floor(Math.random() * validCols.length)];
+    }
+
+    // Handle click on board to drop disc for player
+    boardEl.addEventListener("click", e => {
+      if (gameOver) return;
+      if (!e.target.classList.contains("cell")) return;
+      const col = +e.target.dataset.col;
+      if (currentPlayer === "R") {
+        if (placeDisc(col, "R")) {
+          // placeDisc triggers animation and bot turn
+        }
+      }
+    });
+
+    function resetGame() {
+      gameOver = false;
+      currentPlayer = "R";
+      messageEl.textContent = "";
+      initBoard();
+    }
+
+    // Initialize on load
+    initBoard();
+  </script>
+</body>
+</html>
