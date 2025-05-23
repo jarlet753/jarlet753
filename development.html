@@ -81,12 +81,14 @@
 </head>
 <body>
 
+  <!-- Hamburger Menü Icon -->
   <div class="menu-toggle" onclick="toggleMenu()">
     <div></div>
     <div></div>
     <div></div>
   </div>
 
+  <!-- Menü -->
   <div class="menu" id="menu">
     <a href="index.html">Start</a>
     <a href="discord.html">Discord</a>
@@ -94,11 +96,14 @@
     <a href="development.html">Development</a>
   </div>
 
+  <!-- Inhalt -->
   <h1>Development</h1>
 
+  <!-- JavaScript -->
   <script>
     function toggleMenu() {
-      document.getElementById("menu").classList.toggle("show");
+      const menu = document.getElementById("menu");
+      menu.classList.toggle("show");
     }
   </script>
 
