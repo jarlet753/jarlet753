@@ -1,39 +1,46 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Schach gegen den Bot</title>
-  <style>
-    #board {
-      width: 400px;
-      margin: 20px auto;
-    }
-    #status {
-      text-align: center;
-      margin-top: 10px;
-    }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+<meta charset="UTF-8" />
+<title>Schach gegen Bot</title>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css"
+/>
+<style>
+  #board {
+    width: 400px;
+    margin: 20px auto;
+  }
+  #status {
+    text-align: center;
+    margin-top: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 1.2em;
+  }
+</style>
 </head>
 <body>
 
 <div id="board"></div>
-<div id="status"></div>
+<div id="status">Lade Spiel...</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 
 <script>
   const board = Chessboard('board', {
     draggable: true,
     position: 'start',
-    onDrop: onDrop
+    onDrop: onDrop,
   });
 
   const game = new Chess();
 
-  const stockfish = new Worker("https://stockfish.online/js/stockfish.js");
+  // Stockfish als Worker laden
+  const stockfish = new Worker("https://cdn.jsdelivr.net/gh/niklasf/stockfish.wasm/stockfish.wasm.js");
 
-  stockfish.onmessage = function (event) {
+  stockfish.onmessage = function(event) {
     const line = event.data;
     if (line.startsWith('bestmove')) {
       const move = line.split(' ')[1];
@@ -44,6 +51,7 @@
   };
 
   function onDrop(source, target) {
+    // Spielerzug versuchen
     const move = game.move({
       from: source,
       to: target,
@@ -59,7 +67,11 @@
   }
 
   function makeBotMove() {
-    if (game.game_over()) return;
+    if (game.game_over()) {
+      updateStatus();
+      return;
+    }
+
     stockfish.postMessage("position fen " + game.fen());
     stockfish.postMessage("go depth 15");
   }
@@ -78,7 +90,8 @@
     }
     document.getElementById('status').innerText = status;
   }
-</script>
 
+  updateStatus();
+</script>
 </body>
 </html>
