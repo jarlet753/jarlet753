@@ -79,6 +79,12 @@
     let board = ["", "", "", "", "", "", "", "", ""];
     let gameOver = false;
 
+    const winPatterns = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+
     function renderBoard() {
       boardElement.innerHTML = "";
       board.forEach((value, i) => {
@@ -100,47 +106,65 @@
         gameOver = true;
         return;
       }
-      if (board.every(cell => cell !== "")) {
+      if (isDraw()) {
         messageElement.textContent = "Unentschieden!";
         gameOver = true;
         return;
       }
 
-      setTimeout(botMove, 500); // kleiner Delay für Bot
+      setTimeout(botMove, 400); // kleiner Delay für Realismus
     }
 
     function botMove() {
       if (gameOver) return;
 
-      // einfacher Bot: wählt erstes freies Feld
-      const emptyIndices = board.map((v, i) => v === "" ? i : null).filter(i => i !== null);
-      if (emptyIndices.length === 0) return;
+      let move = findBestMove("O") || findBestMove("X") || getRandomMove();
+      if (move !== null) {
+        board[move] = "O";
+        renderBoard();
 
-      const move = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-      board[move] = "O";
-      renderBoard();
+        if (checkWinner("O")) {
+          messageElement.textContent = "Der Bot hat gewonnen!";
+          gameOver = true;
+          return;
+        }
 
-      if (checkWinner("O")) {
-        messageElement.textContent = "Der Bot hat gewonnen!";
-        gameOver = true;
-        return;
-      }
-
-      if (board.every(cell => cell !== "")) {
-        messageElement.textContent = "Unentschieden!";
-        gameOver = true;
+        if (isDraw()) {
+          messageElement.textContent = "Unentschieden!";
+          gameOver = true;
+        }
       }
     }
 
+    function findBestMove(player) {
+      for (const pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        const values = [board[a], board[b], board[c]];
+        const countPlayer = values.filter(v => v === player).length;
+        const countEmpty = values.filter(v => v === "").length;
+
+        if (countPlayer === 2 && countEmpty === 1) {
+          const emptyIndex = pattern[values.indexOf("")];
+          return emptyIndex;
+        }
+      }
+      return null;
+    }
+
+    function getRandomMove() {
+      const empty = board.map((v, i) => v === "" ? i : null).filter(i => i !== null);
+      if (empty.length === 0) return null;
+      return empty[Math.floor(Math.random() * empty.length)];
+    }
+
     function checkWinner(player) {
-      const winPatterns = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6]
-      ];
       return winPatterns.some(pattern =>
         pattern.every(index => board[index] === player)
       );
+    }
+
+    function isDraw() {
+      return board.every(cell => cell !== "");
     }
 
     function resetGame() {
