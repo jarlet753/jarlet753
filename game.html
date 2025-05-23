@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title>Rennspiel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       overflow: hidden;
       background-color: #333;
+      font-family: sans-serif;
+      touch-action: none;
     }
 
     canvas {
       display: block;
-      margin: 0 auto;
       background: linear-gradient(#555, #333);
+      margin: 0 auto;
       border: 3px solid white;
     }
 
-    .controls {
+    .controls, .restart-btn {
       position: fixed;
       bottom: 20px;
       left: 50%;
@@ -38,42 +42,73 @@
       text-align: center;
       line-height: 80px;
       user-select: none;
-      touch-action: none;
     }
 
     .btn:active {
       background-color: rgba(255, 255, 255, 0.4);
     }
+
+    .restart-btn {
+      bottom: 120px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .restart-btn .btn {
+      width: 160px;
+      height: 50px;
+      border-radius: 8px;
+      font-size: 20px;
+      line-height: 50px;
+    }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <canvas id="gameCanvas"></canvas>
 
-  <!-- Touch-Steuerung -->
+  <!-- Steuerung -->
   <div class="controls">
     <div class="btn" id="leftBtn">◀</div>
     <div class="btn" id="rightBtn">▶</div>
+  </div>
+
+  <!-- Neustart -->
+  <div class="restart-btn" id="restartContainer">
+    <div style="color: white; font-size: 24px; margin-bottom: 10px;">Game Over</div>
+    <div class="btn" id="restartBtn">Neustarten</div>
   </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
+    // Dynamische Größe
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
     const player = {
-      x: 180,
-      y: 500,
-      width: 40,
-      height: 70,
+      x: canvas.width / 2 - 25,
+      y: canvas.height - 120,
+      width: 50,
+      height: 80,
       color: "red",
-      speed: 5
+      speed: 6
     };
 
     let keys = {};
-    let obstacles = [];
-    let gameOver = false;
-    let score = 0;
     let moveLeft = false;
     let moveRight = false;
+    let obstacles = [];
+    let gameOver = false;
+    let lives = 3;
+    let score = 0;
+    let highscore = localStorage.getItem("highscore") || 0;
+    let restartContainer = document.getElementById("restartContainer");
 
     function drawPlayer() {
       ctx.fillStyle = player.color;
@@ -81,13 +116,13 @@
     }
 
     function createObstacle() {
-      const width = 40 + Math.random() * 40;
+      const width = 40 + Math.random() * 50;
       const x = Math.random() * (canvas.width - width);
       obstacles.push({
         x,
-        y: -70,
+        y: -100,
         width,
-        height: 70,
+        height: 80,
         color: "black"
       });
     }
@@ -100,70 +135,92 @@
     }
 
     function moveObstacles() {
-      obstacles.forEach(o => o.y += 4);
+      obstacles.forEach(o => o.y += 6);
       obstacles = obstacles.filter(o => o.y < canvas.height);
     }
 
     function checkCollision() {
-      for (let o of obstacles) {
+      for (let i = 0; i < obstacles.length; i++) {
+        const o = obstacles[i];
         if (
           player.x < o.x + o.width &&
           player.x + player.width > o.x &&
           player.y < o.y + o.height &&
           player.y + player.height > o.y
         ) {
-          gameOver = true;
+          lives--;
+          obstacles.splice(i, 1);
+          if (lives <= 0) {
+            gameOver = true;
+            if (score > highscore) {
+              highscore = score;
+              localStorage.setItem("highscore", highscore);
+            }
+            restartContainer.style.display = "flex";
+          }
         }
       }
     }
 
-    function updateScore() {
-      score++;
+    function drawHUD() {
       ctx.fillStyle = "white";
       ctx.font = "20px Arial";
       ctx.fillText("Punkte: " + score, 10, 30);
+      ctx.fillText("Leben: " + lives, 10, 60);
+      ctx.fillText("Highscore: " + highscore, 10, 90);
+    }
+
+    function resetGame() {
+      player.x = canvas.width / 2 - 25;
+      lives = 3;
+      score = 0;
+      obstacles = [];
+      gameOver = false;
+      restartContainer.style.display = "none";
     }
 
     function gameLoop() {
-      if (gameOver) {
-        ctx.fillStyle = "white";
-        ctx.font = "40px Arial";
-        ctx.fillText("Game Over!", 100, 300);
-        ctx.font = "20px Arial";
-        ctx.fillText("Neustart: F5", 140, 340);
-        return;
+      if (!gameOver) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawPlayer();
+        drawObstacles();
+        moveObstacles();
+        checkCollision();
+        drawHUD();
+
+        if (keys["ArrowLeft"] || moveLeft) player.x -= player.speed;
+        if (keys["ArrowRight"] || moveRight) player.x += player.speed;
+
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+        score++;
+
+        requestAnimationFrame(gameLoop);
       }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      drawPlayer();
-      drawObstacles();
-      moveObstacles();
-      checkCollision();
-      updateScore();
-
-      if (keys["ArrowLeft"] || moveLeft) player.x -= player.speed;
-      if (keys["ArrowRight"] || moveRight) player.x += player.speed;
-
-      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-
-      requestAnimationFrame(gameLoop);
     }
 
     document.addEventListener("keydown", e => keys[e.key] = true);
     document.addEventListener("keyup", e => keys[e.key] = false);
 
-    // Touch-Steuerung
     const leftBtn = document.getElementById("leftBtn");
     const rightBtn = document.getElementById("rightBtn");
+    const restartBtn = document.getElementById("restartBtn");
 
     leftBtn.addEventListener("touchstart", () => moveLeft = true);
     leftBtn.addEventListener("touchend", () => moveLeft = false);
-
     rightBtn.addEventListener("touchstart", () => moveRight = true);
     rightBtn.addEventListener("touchend", () => moveRight = false);
 
-    setInterval(createObstacle, 1500);
+    restartBtn.addEventListener("click", () => {
+      resetGame();
+      requestAnimationFrame(gameLoop);
+    });
+
+    setInterval(() => {
+      if (!gameOver) createObstacle();
+    }, 1200);
+
     requestAnimationFrame(gameLoop);
   </script>
 </body>
