@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Vier Gewinnt</title>
+  <title>Vier Gewinnt - Verbessert</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -52,8 +52,8 @@
       top: 0;
       left: 0;
       pointer-events: none;
-      transform: translateY(-70px);
-      animation-fill-mode: forwards;
+      transform: translateY(-100px);
+      will-change: transform, opacity;
     }
 
     .red {
@@ -66,28 +66,12 @@
       box-shadow: 0 0 8px #ffff88;
     }
 
-    /* Animation für fallende Scheibe */
-    @keyframes fallDown {
-      0% {
-        transform: translateY(-100px);
-        opacity: 0.8;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .falling {
-      animation-name: fallDown;
-      animation-duration: 0.4s;
-      animation-timing-function: ease-in;
-    }
-
     #message {
       margin-top: 20px;
       font-size: 1.2em;
       min-height: 1.5em;
+      min-width: 200px;
+      text-align: center;
     }
 
     button {
@@ -125,12 +109,11 @@
     const boardEl = document.getElementById("board");
     const messageEl = document.getElementById("message");
 
-    // board[row][col] = "" | "R" | "Y"
     let board = [];
-    let currentPlayer = "R"; // Rot (du)
+    let currentPlayer = "R"; // Rot = Spieler
     let gameOver = false;
 
-    // Initialize board 2D array and render empty cells
+    // Init Board: 2D Array + UI Zellen
     function initBoard() {
       board = [];
       boardEl.innerHTML = "";
@@ -140,86 +123,91 @@
           board[r][c] = "";
           const cell = document.createElement("div");
           cell.classList.add("cell");
-          // Set data attributes to identify cells
           cell.dataset.row = r;
           cell.dataset.col = c;
           boardEl.appendChild(cell);
         }
       }
+      messageEl.textContent = "";
+      gameOver = false;
+      currentPlayer = "R";
     }
 
-    // Find lowest empty row in column
+    // Suche niedrigste freie Reihe in Spalte
     function findEmptyRow(col) {
       for (let r = ROWS - 1; r >= 0; r--) {
         if (board[r][col] === "") return r;
       }
-      return -1;
+      return -1; // voll
     }
 
-    // Place disc for current player with animation
-    function placeDisc(col, player) {
+    // Platzieren mit Animation (async für Ablaufkontrolle)
+    async function placeDisc(col, player) {
       if (gameOver) return false;
       const row = findEmptyRow(col);
-      if (row === -1) return false;
+      if (row === -1) return false; // Spalte voll
 
       board[row][col] = player;
-      animateDiscDrop(row, col, player);
+
+      await animateDiscDrop(row, col, player);
+      updateBoardUI();
+
+      if (checkWin(row, col, player)) {
+        gameOver = true;
+        messageEl.textContent = (player === "R" ? "Du hast gewonnen!" : "Der Bot hat gewonnen!");
+        return true;
+      }
+
+      if (isDraw()) {
+        gameOver = true;
+        messageEl.textContent = "Unentschieden!";
+        return true;
+      }
+
       return true;
     }
 
-    // Animate the disc falling down
+    // Animation: Scheibe fällt flüssig (JS animate API)
     function animateDiscDrop(row, col, player) {
-      const disc = document.createElement("div");
-      disc.classList.add("disc");
-      disc.classList.add(player === "R" ? "red" : "yellow");
-      disc.style.gridColumnStart = col + 1;
-      disc.style.gridRowStart = 1; // Start top row
-      boardEl.appendChild(disc);
+      return new Promise(resolve => {
+        const disc = document.createElement("div");
+        disc.classList.add("disc");
+        disc.classList.add(player === "R" ? "red" : "yellow");
 
-      // Calculate distance to fall in pixels (row * (cell size + gap))
-      const fallDistance = row * 65; // 60px cell + 5px gap
+        // Startposition über dem Board (negative Y)
+        const startY = -100;
+        // Endposition = row * (Zellhöhe + Lücke)
+        const fallDistance = row * 65;
 
-      disc.style.transform = `translateY(${-fallDistance - 70}px)`; // Start above top
-      disc.classList.add("falling");
+        disc.style.gridColumnStart = col + 1;
+        disc.style.gridRowStart = 1; // oben starten
+        boardEl.appendChild(disc);
 
-      // Animate falling with JS to get smooth movement
-      disc.animate(
-        [
-          { transform: `translateY(${-fallDistance - 70}px)`, opacity: 0.8 },
-          { transform: `translateY(0)`, opacity: 1 }
-        ],
-        {
+        const animation = disc.animate([
+          { transform: `translateY(${startY}px)`, opacity: 0.8 },
+          { transform: `translateY(${fallDistance}px)`, opacity: 1 }
+        ], {
           duration: 400,
-          easing: "ease-in"
-        }
-      ).onfinish = () => {
-        disc.style.gridRowStart = row + 1;
-        disc.style.transform = "";
-        disc.classList.remove("falling");
-        updateBoardUI();
-        if (checkWin(row, col, player)) {
-          gameOver = true;
-          messageEl.textContent = (player === "R" ? "Du hast gewonnen!" : "Der Bot hat gewonnen!");
-        } else if (isDraw()) {
-          gameOver = true;
-          messageEl.textContent = "Unentschieden!";
-        } else {
-          if (player === "R") {
-            currentPlayer = "Y";
-            setTimeout(botTurn, 600);
-          } else {
-            currentPlayer = "R";
-          }
-        }
-      };
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)"
+        });
+
+        animation.onfinish = () => {
+          disc.style.gridRowStart = row + 1;
+          disc.style.transform = "";
+          disc.style.position = "absolute";
+          disc.style.top = "0";
+          disc.style.left = "0";
+          disc.style.willChange = "auto";
+          resolve();
+        };
+      });
     }
 
-    // Update static board UI after animation
+    // Board UI nach Animation updaten (discs statisch anzeigen)
     function updateBoardUI() {
-      // Remove old static discs
+      // Entferne alte statische Scheiben
       document.querySelectorAll(".cell .disc-static").forEach(el => el.remove());
 
-      // Add discs to cells (static, no animation)
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           if (board[r][c] !== "") {
@@ -245,7 +233,7 @@
       }
     }
 
-    // Check if last move caused a win (4 in a row)
+    // Prüfen, ob Spieler gewinnt
     function checkWin(row, col, player) {
       return (
         countDirection(row, col, player, 1, 0) + countDirection(row, col, player, -1, 0) > 2 ||
@@ -255,10 +243,10 @@
       );
     }
 
-    // Count discs in one direction
-    function countDirection(row, col, player, deltaR, deltaC) {
-      let r = row + deltaR;
-      let c = col + deltaC;
+    // Richtung zählen
+    function countDirection(row, col, player, dR, dC) {
+      let r = row + dR;
+      let c = col + dC;
       let count = 0;
       while (
         r >= 0 &&
@@ -268,39 +256,37 @@
         board[r][c] === player
       ) {
         count++;
-        r += deltaR;
-        c += deltaC;
+        r += dR;
+        c += dC;
       }
       return count;
     }
 
-    // Check for draw
+    // Unentschieden prüfen
     function isDraw() {
       return board[0].every(cell => cell !== "");
     }
 
-    // Bot tries to win or block player, else random move
-    function botTurn() {
+    // Botzug (versucht gewinnen, dann blocken, dann random)
+    async function botTurn() {
       if (gameOver) return;
-      // Try to win
-      let move = findBestMove("Y");
-      // Block player if no win
-      if (move === null) move = findBestMove("R");
-      // Random if none
+
+      let move = findBestMove("Y"); // Bot "Y" gewinnt?
+      if (move === null) move = findBestMove("R"); // Block Player
       if (move === null) move = getRandomMove();
 
       if (move !== null) {
-        placeDisc(move, "Y");
+        await placeDisc(move, "Y");
+        currentPlayer = "R";
       }
     }
 
-    // Find move to win or block player
+    // Beste Spalte finden für Gewinn/Block
     function findBestMove(player) {
       for (let c = 0; c < COLS; c++) {
         let r = findEmptyRow(c);
         if (r === -1) continue;
 
-        // Temporarily place disc
         board[r][c] = player;
         if (checkWin(r, c, player)) {
           board[r][c] = "";
@@ -311,7 +297,7 @@
       return null;
     }
 
-    // Get random valid column
+    // Zufälliger gültiger Zug
     function getRandomMove() {
       let validCols = [];
       for (let c = 0; c < COLS; c++) {
@@ -321,27 +307,33 @@
       return validCols[Math.floor(Math.random() * validCols.length)];
     }
 
-    // Handle click on board to drop disc for player
-    boardEl.addEventListener("click", e => {
+    // Klick auf Board: nur gültige Züge erlauben
+    boardEl.addEventListener("click", async e => {
       if (gameOver) return;
       if (!e.target.classList.contains("cell")) return;
       const col = +e.target.dataset.col;
+
       if (currentPlayer === "R") {
-        if (placeDisc(col, "R")) {
-          // placeDisc triggers animation and bot turn
+        const canPlace = findEmptyRow(col) !== -1;
+        if (!canPlace) {
+          // Voll = keine Aktion
+          return;
+        }
+        const success = await placeDisc(col, "R");
+        if (success) {
+          currentPlayer = "Y";
+          setTimeout(botTurn, 300);
         }
       }
     });
 
     function resetGame() {
-      gameOver = false;
-      currentPlayer = "R";
-      messageEl.textContent = "";
       initBoard();
     }
 
-    // Initialize on load
+    // Start
     initBoard();
   </script>
+
 </body>
 </html>
