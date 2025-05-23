@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #222;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell:hover {
+      background-color: #555;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+
+    .btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tic Tac Toe</h1>
+  <div class="board" id="board"></div>
+  <div class="message" id="message"></div>
+  <button class="btn" onclick="resetGame()">Neustarten</button>
+
+  <script>
+    const boardElement = document.getElementById("board");
+    const messageElement = document.getElementById("message");
+
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let gameOver = false;
+
+    function renderBoard() {
+      boardElement.innerHTML = "";
+      board.forEach((value, i) => {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.textContent = value;
+        cell.addEventListener("click", () => makeMove(i));
+        boardElement.appendChild(cell);
+      });
+    }
+
+    function makeMove(index) {
+      if (board[index] || gameOver) return;
+
+      board[index] = "X";
+      renderBoard();
+      if (checkWinner("X")) {
+        messageElement.textContent = "Du hast gewonnen!";
+        gameOver = true;
+        return;
+      }
+      if (board.every(cell => cell !== "")) {
+        messageElement.textContent = "Unentschieden!";
+        gameOver = true;
+        return;
+      }
+
+      setTimeout(botMove, 500); // kleiner Delay für Bot
+    }
+
+    function botMove() {
+      if (gameOver) return;
+
+      // einfacher Bot: wählt erstes freies Feld
+      const emptyIndices = board.map((v, i) => v === "" ? i : null).filter(i => i !== null);
+      if (emptyIndices.length === 0) return;
+
+      const move = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      board[move] = "O";
+      renderBoard();
+
+      if (checkWinner("O")) {
+        messageElement.textContent = "Der Bot hat gewonnen!";
+        gameOver = true;
+        return;
+      }
+
+      if (board.every(cell => cell !== "")) {
+        messageElement.textContent = "Unentschieden!";
+        gameOver = true;
+      }
+    }
+
+    function checkWinner(player) {
+      const winPatterns = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      return winPatterns.some(pattern =>
+        pattern.every(index => board[index] === player)
+      );
+    }
+
+    function resetGame() {
+      board = ["", "", "", "", "", "", "", "", ""];
+      gameOver = false;
+      messageElement.textContent = "";
+      renderBoard();
+    }
+
+    renderBoard();
+  </script>
+
+</body>
+</html>
