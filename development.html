@@ -7,31 +7,19 @@
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
       height: 100%;
       font-family: Arial, sans-serif;
-    }
-
-    body {
       background-image: url('IMG_1475.jpeg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
       color: white;
       text-shadow: 2px 2px 5px black;
-    }
-
-    h1 {
-      font-size: 3em;
-      margin: 0;
+      overflow-x: hidden;
     }
 
     .menu-toggle {
-      position: absolute;
+      position: fixed;
       top: 20px;
       right: 20px;
       width: 35px;
@@ -49,7 +37,7 @@
     }
 
     .menu {
-      position: absolute;
+      position: fixed;
       top: 0;
       right: -250px;
       width: 250px;
@@ -77,6 +65,32 @@
     .menu.show {
       right: 0;
     }
+
+    .content {
+      padding: 100px 20px 50px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    section {
+      margin-bottom: 60px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2em;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +111,24 @@
   </div>
 
   <!-- Inhalt -->
-  <h1>Development</h1>
+  <div class="content">
+    <h1>Development</h1>
+
+    <section id="erfahrung">
+      <h2>Erfahrung</h2>
+      <p>Ich programmiere seit 3 Jahren, davon eines mir Java und die 2 davor mit verschiedenen Sprachen wie c und c++.</p>
+    </section>
+
+    <section id="technologien">
+      <h2>Technologien</h2>
+      <p>Ich programmiere mit Java und C#. Ich benutze Fabric, Paper und Spigot API sowie Unity.</p>
+    </section>
+
+    <section id="ziele">
+      <h2>Ziele</h2>
+      <p>Ich will noch besser Java Lernen, und mich mehr mit Webentwicklung also js, https und css vertraut machen. Außerdem möchte ich mehr zum Thema Velocity und BungeeCord lernen. Ich möchte besser in Unity werden.</p>
+    </section>
+  </div>
 
   <!-- JavaScript -->
   <script>
