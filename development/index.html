@@ -91,6 +91,30 @@
       font-size: 1.2em;
       line-height: 1.6;
     }
+
+    /* Skillbars */
+    .skill {
+      margin: 15px 0;
+    }
+
+    .skill span {
+      font-weight: bold;
+      display: block;
+    }
+
+    .bar {
+      width: 300px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .level {
+      height: 20px;
+      background: linear-gradient(90deg, #4caf50, #81c784);
+    }
+
   </style>
 </head>
 <body>
@@ -115,17 +139,55 @@
 
     <section id="erfahrung">
       <h2>Erfahrung</h2>
-      <p>Ich programmiere seit 3 Jahren, davon eines mir Java und die 2 davor mit verschiedenen Sprachen wie c und c++.</p>
+      <p>Ich programmiere seit 3 Jahren. Davon 2 Jahre intensiv mit Java, wo ich mich inzwischen als fortgeschritten einschätze. 
+      In HTML, CSS und JavaScript bin ich aktuell noch Anfänger.</p>
     </section>
 
-    <section id="technologien">
+    <section id="skills">
       <h2>Technologien</h2>
-      <p>Ich programmiere mit Java und C#. Ich benutze Fabric, Paper und Spigot API sowie Unity.</p>
+      
+      <div class="skill">
+        <span>Java (2 Jahre, fortgeschritten)</span>
+        <div class="bar"><div class="level" style="width: 80%;"></div></div>
+      </div>
+
+      <div class="skill">
+        <span>HTML</span>
+        <div class="bar"><div class="level" style="width: 30%;"></div></div>
+      </div>
+
+      <div class="skill">
+        <span>CSS</span>
+        <div class="bar"><div class="level" style="width: 30%;"></div></div>
+      </div>
+
+      <div class="skill">
+        <span>JavaScript</span>
+        <div class="bar"><div class="level" style="width: 20%;"></div></div>
+      </div>
     </section>
 
     <section id="ziele">
       <h2>Ziele</h2>
-      <p>Ich will noch besser Java Lernen, und mich mehr mit Webentwicklung also js, https und css vertraut machen. Außerdem möchte ich mehr zum Thema Velocity und BungeeCord lernen. Ich möchte besser in Unity werden.</p>
+      <p>Ich möchte mein Wissen in folgenden Bereichen erweitern:</p>
+      <ul>
+        <li>SQL</li>
+        <li>Kotlin</li>
+        <li>C#</li>
+        <li>Unity</li>
+      </ul>
+    </section>
+
+    <section id="frameworks">
+      <h2>Frameworks & Tools</h2>
+      <ul>
+        <li>Velocity</li>
+        <li>Paper</li>
+        <li>Fabric</li>
+        <li>IntelliJ IDEA</li>
+        <li>Visual Studio Code</li>
+        <li>GitHub</li>
+      </ul>
     </section>
   </div>
 
